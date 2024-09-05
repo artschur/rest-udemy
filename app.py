@@ -35,7 +35,7 @@ def addStore():
     newStore = store.Store(data["name"])
     newStore.add_item(data['item']['itemName'], data['item']['price'])
     storelist.append(newStore)
-    return return_stores()
+    return return_stores(), 201
 
 
     #how do i get data from the json
@@ -45,13 +45,13 @@ def return_stores():
     response = []
     for s in storelist:
         response.append({s.name: s.return_items()})
-    return response
+    return response, 201
 
 @app.route('/store/<name>')
 def return_store(name):
     for i in storelist:
         if i.name == name:
-            return {i.name: i.return_items()}
+            return {i.name: i.return_items()}, 201
     return 'no store with this name', 404
 
 @app.route('/store/<name>/addItem', methods=['POST'])
@@ -60,7 +60,6 @@ def addItem(name):
     itemsAdded = []
     storeExists = False
     for s in storelist:
-        print(s.name)
         if s.name == name:
             storeExists = True
             for i in data['item']:
