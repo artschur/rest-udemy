@@ -1,6 +1,7 @@
 import flask
 from flask import Flask, request, render_template
 import store
+from flask_smorest import abort
 
 app = Flask(__name__)
 
