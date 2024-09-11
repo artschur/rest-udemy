@@ -2,26 +2,26 @@ import flask
 from flask import Flask, request, render_template
 
 from flask_smorest import abort
-import store
+from store import *
 #
-# app = Flask(__name__)
+app = Flask(__name__)
 
-aStore = store.Store('Arthur')
-leite = store.Item('Leite', 4)
-store.i.addItem(leite)
-store.s.register(aStore)
-store.s.add_item_to_store(leite, aStore)
-print(aStore.inventory)
+store_schema = StoreSchema()
+s = StoreController()
+i = ItemController()
+aStore = Store('a')
+lStore = Store('lucas')
+s.register(lStore)
+s.register(aStore)
+leite = Item(name='leite', price=1.0)
+suco = Item(name='suco', price=5.0)
+i.addItem(leite)
+i.addItem(suco)
+s.add_item_to_store(suco, aStore)
+s.add_item_to_store(suco, lStore)
+s.add_item_to_store(leite, aStore)
 
-aStore.add_item('white paint', 15)
-aStore.add_item('water purifier', 170)
 
-cheapStore = store.Store('Cheap Store')
-cheapStore.add_item('chair', 100)
-cheapStore.add_item('door', 30)
-cheapStore.add_item('sink', 50)
-
-storelist = [aStore, cheapStore]
 
 
 # @app.route('/store/<name>/<item>', methods=['GET'])
@@ -35,46 +35,39 @@ storelist = [aStore, cheapStore]
 @app.route('/addstore', methods=['POST'])
 def addStore():
     data = request.get_json()
-    for s in storelist:
-        if data["name"] == s.name:
-            return 'this store already exists, try other one'
-
-    newStore = store.Store(data["name"])
-    newStore.add_item(data['item']['itemName'], data['item']['price'])
-    storelist.append(newStore)
-    return return_stores(), 201
+    s.register(Store(data['store']['name']))
+    return s.stores
 
 
     #how do i get data from the json
 
 @app.route('/stores')
 def return_stores():
-    response = []
-    for s in storelist:
-        response.append({s.name: s.return_items()})
-    return response, 201
+    store_schema = StoreSchema(many=True)  # Since it's a list of stores, we set many=True
+    store_list = list(s.stores.values())   # Extracting the store objects (values of the dictionary)
+    return store_schema.dump(store_list)
 
-@app.route('/store/<name>')
-def return_store(name):
-    for i in storelist:
-        if i.name == name:
-            return {i.name: i.return_items()}, 201
-    return 'no store with this name', 404
+@app.route('/store/<uid>')
+def return_store(uid):
+    store_schema = StoreSchema()
+    try:
+        store = s.stores[uid]  # Get the store object by its ID
+        return store_schema.dump(store)
+    except KeyError:
+        abort(404)
 
-@app.route('/store/<name>/addItem', methods=['POST'])
-def addItem(name):
+@app.route('/store/<uid>/addItem', methods=['POST'])
+def addItem(uid):
     data = request.get_json()
-    itemsAdded = []
-    storeExists = False
-    for s in storelist:
-        if s.name == name:
-            storeExists = True
-            for i in data['item']:
-                s.add_item(i['itemName'], i['price'])
-                itemsAdded.append(f'added {i["itemName"]}')
-    if storeExists:
-        return itemsAdded
-    return 'store doesnt exist'
+    new = Item(data['item']['name'], data['item']['price'])
+    i.addItem(new)
+    s.add_item_to_store(new, s.stores[uid])
+
+@app.route('/store/<uid>/items', methods=['GET'])
+def return_items(uid):
+    itemSchema = ItemSchema(many=True)
+    item_list = list(s.stores[uid].inventory.values())
+    return itemSchema.dump(item_list)
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)

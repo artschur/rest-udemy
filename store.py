@@ -1,5 +1,19 @@
-import marshmallow
+from marshmallow import Schema, fields
 import uuid
+# Schema for the Item class
+
+
+class ItemSchema(Schema):
+    id = fields.Str(dump_only=True)  # Automatically generated, so only for output
+    name = fields.Str(required=True)
+    price = fields.Float(required=True)
+
+
+# Schema for the Store class
+class StoreSchema(Schema):
+    id = fields.Str(dump_only=True)  # Automatically generated
+    name = fields.Str(required=True)
+
 
 class Store:
     def __init__(self, name):
@@ -24,7 +38,6 @@ class Store:
         self.__inventory[item.id] = item
 
 
-
 class StoreController:
     def __init__(self):
         self.__stores = {}
@@ -33,7 +46,7 @@ class StoreController:
     def stores(self):
         return self.__stores
 
-    def register(self, store):
+    def register(self, store: Store):
         self.__stores[store.id] = store
         return self
 
@@ -45,10 +58,11 @@ class StoreController:
         if item.id in self.__stores[store.id].items.keys():
             self.__stores[store.id].items[item.id].pop()
 
-class ItemController: #will contain all items registered to all stores
+
+class ItemController:  # will contain all items registered to all stores
     def __init__(self):
         self.__items = {}
-        self.__itemsStore = {} #link the item to know in which stores they are available
+        self.__itemsStore = {}   #l ink the item to know in which stores they are available
 
     @property
     def itemStore(self):
@@ -106,6 +120,8 @@ aStore = Store('a')
 leite = Item(name='leite', price=1.0)
 i.addItem(leite)
 s.register(aStore)
+lStore = Store('lucas')
+s.register(lStore)
 s.add_item_to_store(leite, aStore)
 
-print(aStore.inventory)
+
