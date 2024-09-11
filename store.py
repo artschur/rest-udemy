@@ -5,7 +5,7 @@ class Store:
     def __init__(self, name):
         self.__id = 's' +uuid.uuid4().hex
         self.__name = name
-        self.__items = {}
+        self.__inventory = {}
 
     @property
     def id(self):
@@ -16,12 +16,12 @@ class Store:
         return self.__name
 
     @property
-    def items(self):
-        return self.__items
+    def inventory(self):
+        return self.__inventory
 
-    @items.setter
-    def items(self, item):
-        self.__items[item.id] = item
+    @inventory.setter
+    def inventory(self, item):
+        self.__inventory[item.id] = item
 
 
 
@@ -38,8 +38,8 @@ class StoreController:
         return self
 
     def add_item_to_store(self, item, store):
-
-        self.__stores[store.id].items = item
+        self.__stores[store.id].inventory = item
+        i.link_item_store(item,store)
 
     def remove_item_from_store(self, item, store):
         if item.id in self.__stores[store.id].items.keys():
@@ -48,21 +48,23 @@ class StoreController:
 class ItemController: #will contain all items registered to all stores
     def __init__(self):
         self.__items = {}
-        self.__itemsStore = [] #link the item to know in which stores they are available
-
+        self.__itemsStore = {} #link the item to know in which stores they are available
 
     @property
     def itemStore(self):
         return self.__itemsStore
-    @itemStore.setter
-    def itemStore(self, item, store):
-        self.__itemsStore[item.id].append(store)
+
+    def link_item_store(self, item, store):
+        self.__itemsStore[item.id] = store
+
     @property
     def item(self):
         return self.__items
+
     def addItem(self, item):
         self.__items[item.id] = item
         return 'added item successfully'
+
 
     def removeItem(self, item):
         try:
@@ -99,9 +101,11 @@ class Item:
 
 
 s = StoreController()
-arthur = Store('arthur')
-s.register(arthur)
-i = Item('itemDOIS', 302)
-s.add_item_to_store(i, arthur)
-print(s.stores[arthur.id].name)
-print(arthur.items[i.id])
+i = ItemController()
+aStore = Store('a')
+leite = Item(name='leite', price=1.0)
+i.addItem(leite)
+s.register(aStore)
+s.add_item_to_store(leite, aStore)
+
+print(aStore.inventory)

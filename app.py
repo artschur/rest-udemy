@@ -1,12 +1,18 @@
 import flask
 from flask import Flask, request, render_template
-import store
+
 from flask_smorest import abort
+import store
+#
+# app = Flask(__name__)
 
-app = Flask(__name__)
+aStore = store.Store('Arthur')
+leite = store.Item('Leite', 4)
+store.i.addItem(leite)
+store.s.register(aStore)
+store.s.add_item_to_store(leite, aStore)
+print(aStore.inventory)
 
-aStore = store.Store('Arthur Store')
-aStore.add_item('chair', 150)
 aStore.add_item('white paint', 15)
 aStore.add_item('water purifier', 170)
 
