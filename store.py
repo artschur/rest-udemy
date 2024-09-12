@@ -50,41 +50,54 @@ class StoreController:
         self.__stores[store.id] = store
         return self
 
-    def add_item_to_store(self, item, store):
+    def add_item_to_store(self, item, store, itemcontroller):
+        itemcontroller.link_item_store(item, store)
         self.__stores[store.id].inventory = item
-        i.link_item_store(item,store)
+
 
     def remove_item_from_store(self, item, store):
-        if item.id in self.__stores[store.id].items.keys():
-            self.__stores[store.id].items[item.id].pop()
+        del store.inventory[item.id]
 
 
-class ItemController:  # will contain all items registered to all stores
+class ItemController:
     def __init__(self):
         self.__items = {}
-        self.__itemsStore = {}   #l ink the item to know in which stores they are available
+        self.__itemsStore = {}  # Maps item.id to the list of stores that have the item
+
 
     @property
-    def itemStore(self):
+    def items(self):
+        return self.__items
+
+    @property
+    def itemsStore(self):
         return self.__itemsStore
 
     def link_item_store(self, item, store):
-        self.__itemsStore[item.id] = store
-
-    @property
-    def item(self):
-        return self.__items
+        # Ensure each item is associated with multiple stores
+        if item.id not in self.__itemsStore:
+            self.__itemsStore[item.id] = []
+        self.__itemsStore[item.id].append(store)
 
     def addItem(self, item):
         self.__items[item.id] = item
-        return 'added item successfully'
-
+        return 'Added item successfully'
 
     def removeItem(self, item):
         try:
-            self.__items.pop(item.id)
-        except:
-            return 'item not found'
+            # Remove item from __items dictionary
+            del self.__items[item.id]
+
+            # Remove item from all stores' inventories
+            if item.id in self.__itemsStore:
+                for store in self.__itemsStore[item.id]:
+                    s.remove_item_from_store(item, store)
+            return 'Removed item successfully'
+
+            return 'Item removed successfully'
+
+        except KeyError:
+            return 'Item not found'
 
 
 
@@ -122,6 +135,6 @@ i.addItem(leite)
 s.register(aStore)
 lStore = Store('lucas')
 s.register(lStore)
-s.add_item_to_store(leite, aStore)
+s.add_item_to_store(leite, aStore, i)
 
 

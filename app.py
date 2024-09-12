@@ -17,9 +17,9 @@ leite = Item(name='leite', price=1.0)
 suco = Item(name='suco', price=5.0)
 i.addItem(leite)
 i.addItem(suco)
-s.add_item_to_store(suco, aStore)
-s.add_item_to_store(suco, lStore)
-s.add_item_to_store(leite, aStore)
+s.add_item_to_store(suco, aStore, i)
+s.add_item_to_store(suco, lStore, i)
+s.add_item_to_store(leite, aStore, i)
 
 
 
@@ -47,7 +47,7 @@ def return_stores():
     store_list = list(s.stores.values())   # Extracting the store objects (values of the dictionary)
     return store_schema.dump(store_list)
 
-@app.route('/store/<uid>')
+@app.get('/store/<uid>')
 def return_store(uid):
     store_schema = StoreSchema()
     try:
@@ -56,18 +56,54 @@ def return_store(uid):
     except KeyError:
         abort(404)
 
-@app.route('/store/<uid>/addItem', methods=['POST'])
+@app.post('/store/<uid>/addItem')
 def addItem(uid):
     data = request.get_json()
     new = Item(data['item']['name'], data['item']['price'])
     i.addItem(new)
-    s.add_item_to_store(new, s.stores[uid])
+    s.add_item_to_store(new, s.stores[uid], i)
+    return f'{data['item']['name']} added to store {uid}'
 
-@app.route('/store/<uid>/items', methods=['GET'])
+@app.get('/store/<uid>/items')
 def return_items(uid):
     itemSchema = ItemSchema(many=True)
     item_list = list(s.stores[uid].inventory.values())
     return itemSchema.dump(item_list)
+
+
+@app.get('/items/<itemuid>')
+def return_item_by_id(itemuid):
+    itemschema = ItemSchema()
+    try:
+        return itemschema.dump(i.items[itemuid])
+    except KeyError:
+        abort(404)
+
+@app.put('/items/<itemuid>')
+def update_item(itemuid):
+    item_data = request.get_json()
+    if "price" not in item_data or "name" not in item_data:
+        abort(400, message="Missing 'price' and 'name' fields")
+    itemschema = ItemSchema()
+    try:
+        item = i.items[itemuid]
+        item.name = item_data["name"]
+        item.price = item_data["price"]
+        #updates the dicts
+        return itemschema.dump(item)
+    except KeyError:
+        abort(404)
+
+
+@app.delete('/items/<itemuid>')
+def delete_item(itemuid):
+    try:
+        item = i.items[itemuid]  # Find the item
+        i.removeItem(item)  # Remove it from ItemController and all stores
+        return f'Item deleted successfully from stores', 200
+    except KeyError:
+        abort(404, message="Item not found")
+
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)
