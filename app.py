@@ -56,6 +56,21 @@ def return_store(uid):
     except KeyError:
         abort(404)
 
+
+@app.delete('/store/<uid>')
+def delete_store(uid):
+    del s.stores[uid]
+    return 'store deleted'
+
+@app.put('/store/<uid>')
+def update_store(uid):
+    data = request.get_json()
+    try:
+        s.stores[uid].name = data['name']
+        return f"{s.stores[uid]} changed successfully to {data['name']}"
+    except KeyError:
+        return abort(404)
+
 @app.post('/store/<uid>/addItem')
 def addItem(uid):
     data = request.get_json()
